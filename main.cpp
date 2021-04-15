@@ -1,34 +1,72 @@
+#include <iostream>
+#include <vector>
 #include <igl/opengl/glfw/Viewer.h>
+#include <igl/readOBJ.h>
+#include "track_flips.h"
+#include <fstream>
 
+void readflips(std::vector<FLIP> &flips)
+{
+  std::ifstream ifs;
+  ifs.open("flips.txt");
+  int n;
+  ifs >> n;
+  for (int i = 0; i < n; i++)
+  {
+    FLIP flip;
+    ifs >> flip.A >> flip.B >> flip.C >> flip.D;
+    flips.push_back(flip);
+  }
+  ifs.close();
+}
+
+void readpts(const Eigen::MatrixXi &F, std::vector<Pt> &pts)
+{
+  std::ifstream ifs;
+  ifs.open("pts.txt");
+  int n;
+  ifs >> n;
+  for (int i = 0; i < n; i++)
+  {
+    Pt pt;
+    int f_id;
+    ifs >> f_id >> pt.bc(0) >> pt.bc(1) >> pt.bc(2);
+    pt.face = F.row(f_id);
+    pts.push_back(pt);
+  }
+  ifs.close();
+}
+
+void printpts(const Eigen::MatrixXd &V, const std::vector<Pt> &pts)
+{
+  for (int i = 0; i < pts.size(); i++)
+  {
+    std::cout << "pt " << i << std::endl;
+    std::cout << "face (" << pts[i].face(0) << "," << pts[i].face(1) << "," << pts[i].face(2) << ")";
+    std::cout << "\nbc (" << pts[i].bc(0) << "," << pts[i].bc(1) << "," << pts[i].bc(2) << ")";
+    std::cout << "\ncoord " << pts[i].bc(0) * V.row(pts[i].face(0)) + pts[i].bc(1) * V.row(pts[i].face(1)) + pts[i].bc(2) * V.row(pts[i].face(2)) << std::endl;
+  }
+}
 int main(int argc, char *argv[])
 {
-  // Inline mesh of a cube
-  const Eigen::MatrixXd V= (Eigen::MatrixXd(8,3)<<
-    0.0,0.0,0.0,
-    0.0,0.0,1.0,
-    0.0,1.0,0.0,
-    0.0,1.0,1.0,
-    1.0,0.0,0.0,
-    1.0,0.0,1.0,
-    1.0,1.0,0.0,
-    1.0,1.0,1.0).finished();
-  const Eigen::MatrixXi F = (Eigen::MatrixXi(12,3)<<
-    1,7,5,
-    1,3,7,
-    1,4,3,
-    1,2,4,
-    3,8,7,
-    3,4,8,
-    5,7,8,
-    5,8,6,
-    1,5,6,
-    1,6,2,
-    2,6,8,
-    2,8,4).finished().array()-1;
+  Eigen::MatrixXd V;
+  Eigen::MatrixXi F;
+  igl::readOBJ("test.obj", V, F);
+  std::vector<FLIP> flips;
+  std::vector<Pt> pts_in, pts_out;
+  readflips(flips);
+  readpts(F, pts_in);
+  std::cout << "pts before flips" << std::endl;
+  printpts(V, pts_in);
+  track_flips(V, F, pts_in, flips, pts_out);
+  std::cout << "pts after flips" << std::endl;
+  printpts(V, pts_out);
 
-  // Plot the mesh
-  igl::opengl::glfw::Viewer viewer;
-  viewer.data().set_mesh(V, F);
-  viewer.data().set_face_based(true);
-  viewer.launch();
+  return 0;
+
+  // // Plot the mesh
+  // igl::opengl::glfw::Viewer viewer;
+  // viewer.data().set_mesh(V, F);
+  // // viewer.data().set_face_based(true);
+  // viewer.launch();
 }
