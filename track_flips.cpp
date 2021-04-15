@@ -1,5 +1,6 @@
 #include "track_flips.h"
 #include <igl/barycentric_coordinates.h>
+#include <iostream>
 void UnfoldTwoTriangles(
   Eigen::RowVector3d &A,
   Eigen::RowVector3d &B,
@@ -18,7 +19,7 @@ void UnfoldTwoTriangles(
   double l_AD = AD.norm();
 
   A_new << 0, 0, 0;
-  B_new << 0, l_AB, 0;
+  B_new << l_AB, 0, 0;
   
   double cos_BAC = AB.dot(AC) / l_AB / l_AC;
   double sin_BAC = std::sqrt(1 - cos_BAC * cos_BAC);
@@ -44,7 +45,7 @@ void track_flip(
     Eigen::RowVector3d D = V.row(flip.D);
 
     UnfoldTwoTriangles(A, B, C, D);
-
+    
     for (auto &pt : pts)
     {
         bool flag = false;
@@ -57,6 +58,7 @@ void track_flip(
             {
                 flag = true;
                 P = pt.bc(j) * A + pt.bc((j + 1) % 3) * B + pt.bc((j + 2) % 3) * C;
+
                 break;
             }
             if ((pt.face(j) == flip.A) && 
@@ -65,18 +67,18 @@ void track_flip(
             {
                 flag = true;
                 P = pt.bc(j) * A + pt.bc((j + 1) % 3) * D + pt.bc((j + 2) % 3) * B;
+                
                 break;
             }
         }
 
         if (!flag) continue;
-
         Eigen::MatrixXd new_bc;
 
         igl::barycentric_coordinates(P, A, D, C, new_bc);
         if (new_bc.row(0).minCoeff() >= 0)
         {
-            pt.face(0) = flip.A; pt.face(1) = flip.B; pt.face(2) = flip.C;
+            pt.face(0) = flip.A; pt.face(1) = flip.D; pt.face(2) = flip.C;
             pt.bc = new_bc.row(0);
         }
         else

@@ -45,6 +45,7 @@ void printpts(const Eigen::MatrixXd &V, const std::vector<Pt> &pts)
     std::cout << "face (" << pts[i].face(0) << "," << pts[i].face(1) << "," << pts[i].face(2) << ")";
     std::cout << "\nbc (" << pts[i].bc(0) << "," << pts[i].bc(1) << "," << pts[i].bc(2) << ")";
     std::cout << "\ncoord " << pts[i].bc(0) * V.row(pts[i].face(0)) + pts[i].bc(1) * V.row(pts[i].face(1)) + pts[i].bc(2) * V.row(pts[i].face(2)) << std::endl;
+    std::cout << std::endl;
   }
 }
 int main(int argc, char *argv[])
