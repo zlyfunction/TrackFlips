@@ -4,6 +4,7 @@
 #include <igl/readOBJ.h>
 #include "track_flips.h"
 #include <fstream>
+#include "ConformalSeamlessSimilarityMapping.hh"
 
 void readflips(std::vector<FLIP> &flips)
 {
@@ -50,18 +51,52 @@ void printpts(const Eigen::MatrixXd &V, const std::vector<Pt> &pts)
 }
 int main(int argc, char *argv[])
 {
-  Eigen::MatrixXd V;
-  Eigen::MatrixXi F;
-  igl::readOBJ("test.obj", V, F);
-  std::vector<FLIP> flips;
-  std::vector<Pt> pts_in, pts_out;
-  readflips(flips);
-  readpts(F, pts_in);
-  std::cout << "pts before flips" << std::endl;
-  printpts(V, pts_in);
-  track_flips(V, F, pts_in, flips, pts_out);
-  std::cout << "pts after flips" << std::endl;
-  printpts(V, pts_out);
+  Mesh M;
+  std::vector<int> _n{-1, 4, 1, -1, 2, 6, 8, -1, 5, -1};
+  std::vector<int> _to{0, 1, 0, 2, 2, 1, 3, 1, 2, 3};
+  std::vector<int> _f{-1, 0, 0, -1, 0, 1, 1, -1, 1, -1};
+  std::vector<int> _h{1, 5};
+  std::vector<int> _out{1, 4, 2, 8};
+  M.n = _n; M.to = _to; M.f = _f; M.h = _h; M.out = _out;
+  M.pts.resize(2);
+  
+  Eigen::RowVector3d pt;
+  pt << 0.1,0.3,0.6;
+  M.pts[0].push_back(pt);
+  pt << 0.7,0.2,0.1;
+  M.pts[0].push_back(pt);
+  pt << 0.3,0.4,0.3;
+  M.pts[1].push_back(pt);
+  for (int i = 0; i < M.pts.size(); i++)
+  {
+    std::cout << "face " << i << std::endl;
+    std::cout << M.v0(M.h[i]) << " " << M.v0(M.n[M.h[i]]) << " " << M.v1(M.n[M.h[i]]) << std::endl;
+    std::cout << "pts:\n";
+    for (auto pt : M.pts[i])
+    {
+      std::cout << pt << std::endl;
+    }
+    std::cout << std::endl;
+  }
+
+  std::cout << "do flip\n";
+  M.flip_ccw(4);
+  // M.flip_ccw(4);
+  for (int i = 0; i < M.pts.size(); i++)
+  {
+    std::cout << "face " << i << std::endl;
+    std::cout << M.v0(M.h[i]) << " " << M.v0(M.n[M.h[i]]) << " " << M.v1(M.n[M.h[i]]) << std::endl;
+    std::cout << "pts:\n";
+    for (auto pt : M.pts[i])
+    {
+      std::cout << pt << std::endl;
+    }
+    std::cout << std::endl;
+  }
+  
+  // for (int v : M.n) std::cout << v << " ";
+  std::cout << std::endl;
+  
 
   return 0;
 
